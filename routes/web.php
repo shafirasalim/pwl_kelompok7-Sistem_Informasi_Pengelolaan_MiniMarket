@@ -6,6 +6,9 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StockMovementController;
+use App\Http\Controllers\SaleController;
+
+Route::resource('sales', SaleController::class);
 
 Route::resource('stock-movements', StockMovementController::class);
 
