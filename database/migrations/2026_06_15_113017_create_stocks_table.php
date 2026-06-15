@@ -21,8 +21,9 @@ return new class extends Migration {
                 ->constrained('products')
                 ->onDelete('cascade');
 
-            $table->integer('stock');
+            $table->integer('stock')->default(0);
 
+            $table->unique(['branch_id', 'product_id']); 
             $table->timestamps();
         });
     }

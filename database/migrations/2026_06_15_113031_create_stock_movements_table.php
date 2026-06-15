@@ -15,17 +15,15 @@ return new class extends Migration {
 
             $table->foreignId('user_id')
                 ->constrained('users')
-                ->onDelete('cascade');
+                ->restrictOnDelete();
 
             $table->foreignId('stock_id')
                 ->constrained('stocks')
-                ->onDelete('cascade');
+                ->restrictOnDelete();
 
             $table->string('type');
-
             $table->integer('quantity');
-
-            $table->date('movement_date');
+            $table->index('movement_date');
 
             $table->timestamps();
         });

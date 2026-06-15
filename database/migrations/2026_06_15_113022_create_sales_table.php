@@ -15,16 +15,15 @@ return new class extends Migration {
 
             $table->foreignId('branch_id')
                 ->constrained('branches')
-                ->onDelete('cascade');
+                ->restrictOnDelete(); 
 
             $table->foreignId('cashier_id')
                 ->constrained('users')
-                ->onDelete('cascade');
+                ->nullOnDelete();
 
             $table->date('sale_date');
-
             $table->decimal('total_price', 12, 2);
-
+            $table->index(['branch_id', 'sale_date']);
             $table->timestamps();
         });
     }

@@ -10,13 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('branch_id')
-                ->nullable()
-                ->constrained('branches')
-                ->onDelete('cascade');
-
-            $table->string('role');
+        Schema::create('branches', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('city');
+            $table->string('address');
+            $table->softDeletes();
+            $table->timestamps();
         });
     }
 
@@ -25,8 +25,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('branches');
     }
 };
