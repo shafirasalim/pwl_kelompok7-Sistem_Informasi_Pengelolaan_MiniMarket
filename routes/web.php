@@ -7,6 +7,9 @@ use App\Http\Controllers\StockController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SaleDetailController;
+
+Route::resource('sale-details', SaleDetailController::class);
 
 Route::resource('sales', SaleController::class);
 
