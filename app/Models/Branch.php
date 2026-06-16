@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Branch extends Model
 {
+    use SoftDeletes;
     protected $fillable = ['name', 'city', 'address'];
 
     public function users()

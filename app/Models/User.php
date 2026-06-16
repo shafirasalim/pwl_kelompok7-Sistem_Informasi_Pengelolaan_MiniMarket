@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Branch;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -18,11 +16,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -34,5 +27,15 @@ class User extends Authenticatable
     public function branch()
     {
         return $this->belongsTo(Branch::class);
+    }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class, 'cashier_id');
+    }
+
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
     }
 }
