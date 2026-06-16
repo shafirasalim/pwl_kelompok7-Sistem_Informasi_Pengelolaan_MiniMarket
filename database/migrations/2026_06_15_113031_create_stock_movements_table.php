@@ -23,6 +23,7 @@ return new class extends Migration {
 
             $table->string('type');
             $table->integer('quantity');
+            $table->date('movement_date'); 
             $table->index('movement_date');
 
             $table->timestamps();

@@ -18,6 +18,7 @@ return new class extends Migration {
                 ->restrictOnDelete(); 
 
             $table->foreignId('cashier_id')
+                ->nullable()
                 ->constrained('users')
                 ->nullOnDelete();
 
