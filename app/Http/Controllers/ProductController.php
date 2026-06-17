@@ -21,6 +21,9 @@ class ProductController extends Controller
      */
     public function create()
     {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Hanya Owner yang bisa mengelola produk');
+        }
         return view('products.create');
     }
 
@@ -29,16 +32,17 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        Product::create([
-            'name' => $request->name,
-            'price' => $request->price,
-        ]);
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Hanya Owner yang bisa mengelola produk');
+        }
+
         $request->validate([
-            'name' => 'required|max:255',
+            'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0'
         ]);
-
-        return redirect()->route('products.index');
+        Product::create($request->only(['name', 'price']));
+        
+        return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan');
     }
 
     /**
@@ -54,6 +58,9 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Hanya Owner yang bisa mengelola produk');
+        }
         return view('products.edit', compact('product'));
     }
 
@@ -62,16 +69,21 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Hanya Owner yang bisa mengelola produk');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+        ]);
+
         $product->update([
             'name' => $request->name,
             'price' => $request->price,
         ]);
-        $request->validate([
-            'name' => 'required|max:255',
-            'price' => 'required|numeric|min:0'
-        ]);
 
-        return redirect()->route('products.index');
+        return redirect()->route('products.index')->with('success', 'Produk berhasil diupdate');
     }
 
     /**
@@ -79,8 +91,12 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+        if (auth()->user()->role !== 'owner') {
+            abort(403, 'Hanya Owner yang bisa mengelola produk');
+        }
+
         $product->delete();
 
-        return redirect()->route('products.index');
+        return redirect()->route('products.index')->with('success', 'Produk berhasil dihapus');
     }
 }
