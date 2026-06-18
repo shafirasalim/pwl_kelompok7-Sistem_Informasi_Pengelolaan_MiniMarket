@@ -1,37 +1,61 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Data Produk</title>
-</head>
-<body>
-    <h1>Data Produk</h1>
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Data Produk') }}
+        </h2>
+    </x-slot>
 
-    <a href="{{ route('products.create') }}">Tambah Produk</a>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    
+                    {{-- Tombol Tambah --}}
+                    <div class="mb-6">
+                        <a href="{{ route('products.create') }}">
+                            <x-primary-button>
+                                {{ __('+ Tambah Produk') }}
+                            </x-primary-button>
+                        </a>
+                    </div>
 
-    <table border="1" cellpadding="10" cellspacing="0">
-        <tr>
-            <th>No</th>
-            <th>Nama Produk</th>
-            <th>Harga</th>
-            <th>Aksi</th>
-        </tr>
+                    {{-- Tabel Modern dengan Tailwind --}}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Produk</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach ($products as $product)
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $loop->iteration }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $product->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
+                                        <a href="{{ route('products.edit', $product->id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                            Edit
+                                        </a>
+                                        <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" onclick="return confirm('Yakin hapus produk ini?')" class="text-red-600 hover:text-red-900">
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
 
-        @foreach ($products as $product)
-        <tr>
-            <td>{{ $loop->iteration }}</td>
-            <td>{{ $product->name }}</td>
-            <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
-            <td>
-                <a href="{{ route('products.edit', $product->id) }}">Edit</a>
-
-                <form action="{{ route('products.destroy', $product->id) }}" method="POST" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" onclick="return confirm('Yakin hapus produk ini?')">Hapus</button>
-                </form>
-            </td>
-        </tr>
-        @endforeach
-    </table>
-</body>
-</html>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>

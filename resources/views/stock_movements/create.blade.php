@@ -1,49 +1,72 @@
-<h1>Tambah Stock Movement</h1>
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Tambah Mutasi Stok') }}
+        </h2>
+    </x-slot>
 
-<form action="{{ route('stock-movements.store') }}" method="POST">
-    @csrf
+    <div class="py-12">
+        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900">
+                    
+                    <form action="{{ route('stock-movements.store') }}" method="POST">
+                        @csrf
 
-    <label>User</label>
-    <select name="user_id">
-        @foreach($users as $user)
-            <option value="{{ $user->id }}">
-                {{ $user->name }}
-            </option>
-        @endforeach
-    </select>
+                        {{-- Pilih Stock (Cabang & Produk) --}}
+                        <div class="mt-4">
+                            <x-input-label for="stock_id" :value="__('Pilih Stok (Cabang - Produk)')" />
+                            <select id="stock_id" name="stock_id" required 
+                                    class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full">
+                                <option value="">-- Pilih Stok --</option>
+                                @foreach($stocks as $stock)
+                                    <option value="{{ $stock->id }}">
+                                        {{ $stock->branch->name }} - {{ $stock->product->name }} (Sisa: {{ $stock->stock }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <x-input-error :messages="$errors->get('stock_id')" class="mt-2" />
+                        </div>
 
-    <br><br>
+                        {{-- Tipe Mutasi --}}
+                        <div class="mt-4">
+                            <x-input-label for="type" :value="__('Tipe Mutasi')" />
+                            <select id="type" name="type" required 
+                                    class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm block mt-1 w-full">
+                                <option value="in">Barang Masuk (IN)</option>
+                                <option value="out">Barang Keluar (OUT)</option>
+                                <option value="adjustment">Adjustment (Penyesuaian)</option>
+                            </select>
+                            <x-input-error :messages="$errors->get('type')" class="mt-2" />
+                        </div>
 
-    <label>Stock</label>
-    <select name="stock_id">
-        @foreach($stocks as $stock)
-            <option value="{{ $stock->id }}">
-                {{ $stock->product->name }}
-            </option>
-        @endforeach
-    </select>
+                        {{-- Quantity --}}
+                        <div class="mt-4">
+                            <x-input-label for="quantity" :value="__('Jumlah (Qty)')" />
+                            <x-text-input id="quantity" class="block mt-1 w-full" type="number" name="quantity" :value="old('quantity')" required min="1" />
+                            <x-input-error :messages="$errors->get('quantity')" class="mt-2" />
+                        </div>
 
-    <br><br>
+                        {{-- Tanggal --}}
+                        <div class="mt-4">
+                            <x-input-label for="movement_date" :value="__('Tanggal')" />
+                            <x-text-input id="movement_date" class="block mt-1 w-full" type="date" name="movement_date" :value="old('movement_date', date('Y-m-d'))" required />
+                            <x-input-error :messages="$errors->get('movement_date')" class="mt-2" />
+                        </div>
 
-    <label>Tipe</label>
-    <select name="type">
-        <option value="IN">IN</option>
-        <option value="OUT">OUT</option>
-    </select>
+                        {{-- Tombol --}}
+                        <div class="flex items-center justify-end mt-6">
+                            <a href="{{ route('stock-movements.index') }}" class="text-sm text-gray-600 hover:text-gray-900 mr-4">
+                                Kembali
+                            </a>
+                            <x-primary-button class="ms-4">
+                                {{ __('Simpan') }}
+                            </x-primary-button>
+                        </div>
+                    </form>
 
-    <br><br>
-
-    <label>Quantity</label>
-    <input type="number" name="quantity">
-
-    <br><br>
-
-    <label>Tanggal</label>
-    <input type="date" name="movement_date">
-
-    <br><br>
-
-    <button type="submit">
-        Simpan
-    </button>
-</form>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
