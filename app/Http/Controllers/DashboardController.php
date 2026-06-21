@@ -16,7 +16,6 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         if ($user->role === 'owner') {
-            // Owner lihat semua data
             $totalBranches = Branch::count();
             $totalUsers = User::count();
             $totalSales = Sale::count();

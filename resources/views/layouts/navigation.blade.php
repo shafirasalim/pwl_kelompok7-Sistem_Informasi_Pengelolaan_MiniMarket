@@ -15,6 +15,51 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    {{-- Menu Cabang - HANYA Owner --}}
+                    @if(auth()->user()->role === 'owner')
+                        <x-nav-link :href="route('branches.index')" :active="request()->routeIs('branches.*')">
+                            {{ __('Cabang') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- Menu Pegawai - Owner & Manager --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'manager']))
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            {{ __('Pegawai') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- Menu Produk - Owner, Manager, Supervisor, Warehouse (Read-only untuk Supervisor & Warehouse) --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'manager', 'supervisor', 'warehouse']))
+                        <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
+                            {{ __('Produk') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- Menu Stok & Mutasi - Owner, Manager, Warehouse, Supervisor (Read-only untuk Supervisor) --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'manager', 'warehouse', 'supervisor']))
+                        <x-nav-link :href="route('stocks.index')" :active="request()->routeIs('stocks.*')">
+                            {{ __('Stok') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('stock-movements.index')" :active="request()->routeIs('stock-movements.*')">
+                            {{ __('Mutasi Stok') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- Menu Transaksi - Owner, Manager, Supervisor, Cashier --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'manager', 'supervisor', 'cashier']))
+                        <x-nav-link :href="route('sales.index')" :active="request()->routeIs('sales.*')">
+                            {{ __('Transaksi') }}
+                        </x-nav-link>
+                    @endif
+
+                    {{-- Menu Laporan - Owner, Manager, Supervisor (Read-only untuk Supervisor) --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'manager', 'supervisor']))
+                        <x-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                            {{ __('Laporan') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -64,12 +109,57 @@
         </div>
     </div>
 
-    <!-- Responsive Navigation Menu -->
+    <!-- Responsive Navigation Menu (Mobile) -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+
+            {{-- Menu Mobile Cabang - HANYA Owner --}}
+            @if(auth()->user()->role === 'owner')
+                <x-responsive-nav-link :href="route('branches.index')" :active="request()->routeIs('branches.*')">
+                    {{ __('Cabang') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- Menu Mobile Pegawai - Owner & Manager --}}
+            @if(in_array(auth()->user()->role, ['owner', 'manager']))
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    {{ __('Pegawai') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- Menu Mobile Produk - Owner, Manager, Supervisor, Warehouse --}}
+            @if(in_array(auth()->user()->role, ['owner', 'manager', 'supervisor', 'warehouse']))
+                <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.*')">
+                    {{ __('Produk') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- Menu Mobile Stok & Mutasi - Owner, Manager, Warehouse, Supervisor --}}
+            @if(in_array(auth()->user()->role, ['owner', 'manager', 'warehouse', 'supervisor']))
+                <x-responsive-nav-link :href="route('stocks.index')" :active="request()->routeIs('stocks.*')">
+                    {{ __('Stok') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('stock-movements.index')" :active="request()->routeIs('stock-movements.*')">
+                    {{ __('Mutasi Stok') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- Menu Mobile Transaksi - Owner, Manager, Supervisor, Cashier --}}
+            @if(in_array(auth()->user()->role, ['owner', 'manager', 'supervisor', 'cashier']))
+                <x-responsive-nav-link :href="route('sales.index')" :active="request()->routeIs('sales.*')">
+                    {{ __('Transaksi') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- Menu Mobile Laporan - Owner, Manager, Supervisor --}}
+            @if(in_array(auth()->user()->role, ['owner', 'manager', 'supervisor']))
+                <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
+                    {{ __('Laporan') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

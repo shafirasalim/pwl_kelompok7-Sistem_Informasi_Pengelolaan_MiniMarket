@@ -12,6 +12,10 @@ class StockMovementController extends Controller
 {
     public function index()
     {
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'warehouse', 'supervisor'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $user = auth()->user();
         
         $query = StockMovement::with(['user', 'stock.product', 'stock.branch']);
@@ -34,7 +38,9 @@ class StockMovementController extends Controller
         }
 
         $user = auth()->user();
-        $stocks = Stock::with(['product', 'branch']);
+        $stocks = Stock::with(['product', 'branch'])
+            ->whereHas('product')
+            ->whereHas('branch');
         
         if ($user->role !== 'owner') {
             $stocks->where('branch_id', $user->branch_id);
@@ -91,7 +97,9 @@ class StockMovementController extends Controller
         }
 
         $user = auth()->user();
-        $stocks = Stock::with(['product', 'branch']);
+        $stocks = Stock::with(['product', 'branch'])
+            ->whereHas('product')
+            ->whereHas('branch');
         
         if ($user->role !== 'owner') {
             $stocks->where('branch_id', $user->branch_id);

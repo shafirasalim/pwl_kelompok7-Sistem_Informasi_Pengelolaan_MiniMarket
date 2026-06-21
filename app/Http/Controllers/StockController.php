@@ -11,6 +11,10 @@ class StockController extends Controller
 {
     public function index()
     {
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'warehouse', 'supervisor'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $user = auth()->user();
 
         $query = Stock::with(['branch', 'product']);
@@ -90,6 +94,15 @@ class StockController extends Controller
             'product_id' => 'required|exists:products,id',
             'stock' => 'required|integer|min:0',
         ]);
+
+        $existingStock = Stock::where('branch_id', $request->branch_id)
+            ->where('product_id', $request->product_id)
+            ->where('id', '!=', $stock->id)
+            ->first();
+
+        if ($existingStock) {
+            return back()->withErrors(['product_id' => 'Kombinasi cabang dan produk ini sudah ada di stok lain.']);
+        }
 
         $stock->update($request->only(['branch_id', 'product_id', 'stock']));
 

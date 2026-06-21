@@ -40,6 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/sales', [ReportController::class, 'salesReport'])->name('reports.sales');
     Route::get('/reports/stock', [ReportController::class, 'stockReport'])->name('reports.stock');
-});
+    Route::get('/reports/sales/pdf', [ReportController::class, 'exportSalesPdf'])->name('reports.sales.pdf');
+    Route::get('/reports/stock/pdf', [ReportController::class, 'exportStockPdf'])->name('reports.stock.pdf');
+    });
 
 require __DIR__.'/auth.php';

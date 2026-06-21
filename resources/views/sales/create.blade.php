@@ -7,16 +7,45 @@
 
     <div class="py-12">
         <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
+        
+            @if(auth()->user()->role === 'owner' && isset($branches) && $branches->count() > 0)
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 mb-6">
+                <form action="{{ route('sales.create') }}" method="GET" class="flex items-center gap-4 flex-wrap">
+                    <x-input-label for="branch" :value="__('Cabang Aktif:')" />
+                    <select name="branch" id="branch" onchange="this.form.submit()" 
+                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" {{ $activeBranchId == $branch->id ? 'selected' : '' }}>
+                                {{ $branch->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <span class="text-sm text-gray-500">💡 Owner sedang melayani cabang ini</span>
+                </form>
+            </div>
+            @endif
+
             <x-card>
-                <form action="{{ route('sales.store') }}" method="POST" x-data="{ 
-                    items: [], 
-                    products: @json($stocks->map(fn($s) => ['id' => $s->product_id, 'name' => $s->product->name, 'price' => $s->product->price, 'stock_id' => $s->id, 'stock' => $s->stock])),
+                {{-- Info Cabang Aktif --}}
+                @if(auth()->user()->role === 'owner')
+                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p class="text-sm text-blue-700">
+                            📍 <strong>Cabang Aktif:</strong> 
+                            {{ $branches->firstWhere('id', $activeBranchId)->name ?? 'Tidak ada cabang' }}
+                        </p>
+                    </div>
+                @endif
+
+                <form action="{{ route('sales.store') }}" method="POST" x-data="{
+                    items: [],
+                    products: {{ Illuminate\Support\Js::from($productsData) }},
                     selectedProduct: '',
                     qty: 1,
                     get total() { return this.items.reduce((sum, item) => sum + (item.price * item.qty), 0); },
                     addItem() {
                         if(!this.selectedProduct) return;
                         const product = this.products.find(p => p.id == this.selectedProduct);
+                        if(!product) return;
                         if(this.qty > product.stock) { alert('Stok tidak mencukupi!'); return; }
                         
                         const existing = this.items.find(i => i.id == product.id);
@@ -28,6 +57,9 @@
                     removeItem(index) { this.items.splice(index, 1); }
                 }">
                     @csrf
+                    
+                    {{-- Hidden input untuk branch_id --}}
+                    <input type="hidden" name="branch_id" value="{{ $activeBranchId }}">
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         
