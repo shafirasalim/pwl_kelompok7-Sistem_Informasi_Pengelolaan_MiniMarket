@@ -7,28 +7,33 @@ use App\Models\Stock;
 use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
     public function index()
     {
+        // Semua role yang boleh lihat laporan
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'supervisor'])) {
+            abort(403, 'Unauthorized action.');
+        }
+        
         return view('reports.index');
     }
 
-    /**
-     * Laporan Penjualan
-     */
     public function salesReport(Request $request)
     {
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'supervisor'])) {
+            abort(403, 'Unauthorized action.');
+        }
 
         $user = auth()->user();
-        
+
+        $startDate = $request->start_date ?? now()->subDays(7)->format('Y-m-d');
+        $endDate = $request->end_date ?? now()->format('Y-m-d');
+
         $query = Sale::with(['cashier', 'branch', 'details.product'])
-            ->whereBetween('sale_date', [$request->start_date, $request->end_date]);
+            ->whereBetween('sale_date', [$startDate, $endDate]);
 
         if ($user->role !== 'owner') {
             $query->where('branch_id', $user->branch_id);
@@ -39,14 +44,24 @@ class ReportController extends Controller
         }
 
         $sales = $query->orderBy('sale_date', 'desc')->get();
-        
+
         $totalRevenue = $sales->sum('total_price');
         $totalTransactions = $sales->count();
 
         $productSales = DB::table('sale_details')
             ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
             ->join('products', 'sale_details.product_id', '=', 'products.id')
-            ->whereBetween('sales.sale_date', [$request->start_date, $request->end_date])
+            ->whereBetween('sales.sale_date', [$startDate, $endDate]);
+
+        if ($user->role !== 'owner') {
+            $productSales->where('sales.branch_id', $user->branch_id);
+        }
+
+        if ($user->role === 'owner' && $request->branch_id) {
+            $productSales->where('sales.branch_id', $request->branch_id);
+        }
+
+        $productSales = $productSales
             ->select(
                 'products.name as product_name',
                 DB::raw('SUM(sale_details.quantity) as total_quantity'),
@@ -56,11 +71,11 @@ class ReportController extends Controller
             ->orderBy('total_quantity', 'desc')
             ->get();
 
-        $branches = Branch::all();
+        $branches = ($user->role === 'owner') ? Branch::all() : collect();
 
         return view('reports.sales', compact(
-            'sales', 
-            'totalRevenue', 
+            'sales',
+            'totalRevenue',
             'totalTransactions',
             'productSales',
             'branches',
@@ -68,15 +83,22 @@ class ReportController extends Controller
         ));
     }
 
-    /**
-     * Laporan Stok
-     */
     public function stockReport(Request $request)
     {
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'supervisor'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $user = auth()->user();
-        
+        $showAll = $request->boolean('show_all', false); 
+        $threshold = $request->low_stock_threshold ?? 10;
+
         $query = Stock::with(['branch', 'product'])
-            ->where('stock', '<=', $request->low_stock_threshold ?? 10); // Default stok < 10
+            ->whereHas('product');
+
+        if (!$showAll) {
+            $query->where('stock', '<=', $threshold);
+        }
 
         if ($user->role !== 'owner') {
             $query->where('branch_id', $user->branch_id);
@@ -86,40 +108,100 @@ class ReportController extends Controller
             $query->where('branch_id', $request->branch_id);
         }
 
-        $stocks = $query->orderBy('stock', 'asc')->get();
+        $stocks = $query->orderBy('branch_id')->orderBy('stock', 'asc')->get();
+        $branches = ($user->role === 'owner') ? Branch::all() : collect();
 
-        $branches = Branch::all();
-
-        return view('reports.stock', compact('stocks', 'branches', 'request'));
+        return view('reports.stock', compact('stocks', 'branches', 'request', 'threshold', 'showAll'));
     }
 
-    /**
-     * Laporan Transaksi per Cabang (untuk Owner)
-     */
-    public function branchReport(Request $request)
+    public function exportSalesPdf(Request $request)
     {
-        if (auth()->user()->role !== 'owner') {
-            abort(403, 'Hanya Owner yang bisa melihat laporan semua cabang');
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'supervisor'])) {
+            abort(403, 'Unauthorized action.');
         }
 
-        $request->validate([
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
+        $user = auth()->user();
 
-        $branches = Branch::withCount([
-            'sales as total_sales' => function ($query) use ($request) {
-                $query->whereBetween('sale_date', [$request->start_date, $request->end_date]);
-            },
-        ])
-        ->with([
-            'sales' => function ($query) use ($request) {
-                $query->whereBetween('sale_date', [$request->start_date, $request->end_date])
-                      ->select(DB::raw('branch_id'), DB::raw('SUM(total_price) as total_revenue'));
-            }
-        ])
-        ->get();
+        $startDate = $request->start_date ?? now()->subDays(7)->format('Y-m-d');
+        $endDate = $request->end_date ?? now()->format('Y-m-d');
 
-        return view('reports.branch', compact('branches', 'request'));
+        $query = Sale::with(['cashier', 'branch', 'details.product'])
+            ->whereBetween('sale_date', [$startDate, $endDate]);
+
+        if ($user->role !== 'owner') {
+            $query->where('branch_id', $user->branch_id);
+        }
+
+        if ($user->role === 'owner' && $request->branch_id) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
+        $sales = $query->orderBy('sale_date', 'desc')->get();
+
+        $totalRevenue = $sales->sum('total_price');
+        $totalTransactions = $sales->count();
+
+        $productSales = DB::table('sale_details')
+            ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
+            ->join('products', 'sale_details.product_id', '=', 'products.id')
+            ->whereBetween('sales.sale_date', [$startDate, $endDate])
+            ->select(
+                'products.name as product_name',
+                DB::raw('SUM(sale_details.quantity) as total_quantity'),
+                DB::raw('SUM(sale_details.subtotal) as total_revenue')
+            )
+            ->groupBy('products.id', 'products.name')
+            ->orderBy('total_quantity', 'desc')
+            ->get();
+
+        $filename = 'laporan-penjualan-' . $startDate . '-to-' . $endDate . '.pdf';
+
+        $pdf = Pdf::loadView('reports.pdf.sales', compact(
+            'sales',
+            'totalRevenue',
+            'totalTransactions',
+            'productSales',
+            'request'
+        ));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download($filename);
+    }
+
+    public function exportStockPdf(Request $request)
+    {
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'supervisor'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $user = auth()->user();
+        $showAll = $request->boolean('show_all', false);
+        $threshold = $request->low_stock_threshold ?? 10;
+
+        $query = Stock::with(['branch', 'product'])
+            ->whereHas('product');
+
+        if (!$showAll) {
+            $query->where('stock', '<=', $threshold);
+        }
+
+        if ($user->role !== 'owner') {
+            $query->where('branch_id', $user->branch_id);
+        }
+
+        if ($user->role === 'owner' && $request->branch_id) {
+            $query->where('branch_id', $request->branch_id);
+        }
+
+        $stocks = $query->orderBy('branch_id')->orderBy('stock', 'asc')->get();
+
+        $filename = $showAll 
+            ? 'laporan-semua-stok-' . now()->format('Y-m-d') . '.pdf'
+            : 'laporan-stok-menipis-' . now()->format('Y-m-d') . '.pdf';
+
+        $pdf = Pdf::loadView('reports.pdf.stock', compact('stocks', 'threshold', 'showAll'));
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download($filename);
     }
 }

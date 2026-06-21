@@ -14,6 +14,10 @@ class SaleController extends Controller
 {
     public function index()
     {
+        if (!in_array(auth()->user()->role, ['owner', 'manager', 'supervisor', 'cashier'])) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $user = auth()->user();
         
         $query = Sale::with(['cashier', 'branch', 'details.product']);
@@ -27,20 +31,44 @@ class SaleController extends Controller
         return view('sales.index', compact('sales'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        // Supervisor bisa buat transaksi
         if (!in_array(auth()->user()->role, ['owner', 'manager', 'supervisor', 'cashier'])) {
             abort(403, 'Unauthorized action.');
         }
 
         $user = auth()->user();
-    
-        $stocks = Stock::with('product')
-            ->where('branch_id', $user->branch_id)
+        
+        $activeBranchId = null;
+        
+        if ($user->role === 'owner') {
+            $activeBranchId = $request->query('branch');
+            
+            if (!$activeBranchId) {
+                $activeBranchId = Branch::first()->id;
+            }
+        } else {
+            $activeBranchId = $user->branch_id;
+        }
+        $stocks = Stock::with(['product', 'branch'])
+            ->whereHas('product')
+            ->where('branch_id', $activeBranchId)
             ->where('stock', '>', 0)
             ->get();
-        
-        return view('sales.create', compact('stocks'));
+
+        $productsData = $stocks->map(function($s) {
+            return [
+                'id' => $s->product_id,
+                'name' => $s->product->name,
+                'price' => $s->product->price,
+                'stock_id' => $s->id,
+                'stock' => $s->stock,
+            ];
+        });
+        $branches = ($user->role === 'owner') ? Branch::all() : collect();
+
+        return view('sales.create', compact('stocks', 'productsData', 'activeBranchId', 'branches'));
     }
 
     public function store(Request $request)
@@ -50,6 +78,7 @@ class SaleController extends Controller
         }
 
         $request->validate([
+            'branch_id' => 'required|exists:branches,id',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -57,10 +86,12 @@ class SaleController extends Controller
         ]);
 
         $user = auth()->user();
-        $branchId = $user->branch_id;
+        $branchId = $request->branch_id;
+        
         DB::transaction(function () use ($request, $user, $branchId) {
             $totalPrice = 0;
             $items = [];
+            
             foreach ($request->items as $item) {
                 $stock = Stock::where('branch_id', $branchId)
                     ->where('product_id', $item['product_id'])

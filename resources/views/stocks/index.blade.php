@@ -33,8 +33,8 @@
                                 @foreach($stocks as $stock)
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $loop->iteration }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $stock->branch->name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $stock->product->name }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $stock->branch->name ?? 'Cabang Dihapus' }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $stock->product->name ?? 'Produk Dihapus' }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
                                         {{ $stock->stock }}
                                     </td>

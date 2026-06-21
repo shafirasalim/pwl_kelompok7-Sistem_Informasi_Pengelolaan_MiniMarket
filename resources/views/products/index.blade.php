@@ -10,7 +10,8 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     
-                    {{-- Tombol Tambah --}}
+                    {{-- Tombol Tambah (Hanya Owner & Manager) --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'manager']))
                     <div class="mb-6">
                         <a href="{{ route('products.create') }}">
                             <x-primary-button>
@@ -18,6 +19,7 @@
                             </x-primary-button>
                         </a>
                     </div>
+                    @endif
 
                     {{-- Tabel Modern dengan Tailwind --}}
                     <div class="overflow-x-auto">
@@ -37,16 +39,25 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $product->name }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
-                                        <a href="{{ route('products.edit', $product->id) }}" class="text-indigo-600 hover:text-indigo-900">
-                                            Edit
-                                        </a>
-                                        <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" onclick="return confirm('Yakin hapus produk ini?')" class="text-red-600 hover:text-red-900">
-                                                Hapus
-                                            </button>
-                                        </form>
+                                        
+                                        {{-- Tombol Edit (Hanya Owner & Manager) --}}
+                                        @if(in_array(auth()->user()->role, ['owner', 'manager']))
+                                            <a href="{{ route('products.edit', $product->id) }}" class="text-indigo-600 hover:text-indigo-900">
+                                                Edit
+                                            </a>
+                                        @endif
+
+                                        {{-- Tombol Hapus (HANYA Owner) --}}
+                                        @if(auth()->user()->role === 'owner')
+                                            <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" onclick="return confirm('Yakin hapus produk ini?')" class="text-red-600 hover:text-red-900">
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        @endif
+
                                     </td>
                                 </tr>
                                 @endforeach
