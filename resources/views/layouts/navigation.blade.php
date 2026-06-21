@@ -60,6 +60,13 @@
                             {{ __('Laporan') }}
                         </x-nav-link>
                     @endif
+
+                    {{-- Menu Audit Log - HANYA Owner --}}
+                    @if(auth()->user()->role === 'owner')
+                        <x-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')">
+                            {{ __('Audit Log') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -165,6 +172,13 @@
             @if(in_array(auth()->user()->role, ['owner', 'manager', 'supervisor']))
                 <x-responsive-nav-link :href="route('reports.index')" :active="request()->routeIs('reports.*')">
                     {{ __('Laporan') }}
+                </x-responsive-nav-link>
+            @endif
+
+            {{-- Menu Mobile Audit Log - HANYA Owner --}}
+            @if(auth()->user()->role === 'owner')
+                <x-responsive-nav-link :href="route('audit-logs.index')" :active="request()->routeIs('audit-logs.*')">
+                    {{ __('Audit Log') }}
                 </x-responsive-nav-link>
             @endif
         </div>
